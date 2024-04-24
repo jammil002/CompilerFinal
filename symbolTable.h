@@ -1,4 +1,5 @@
-#pragma once
+#ifndef SYMBOL_TABLE_H
+#define SYMBOL_TABLE_H
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -31,3 +32,5 @@ void popScope(SymbolTable *table);
 void addSymbolToCurrentScope(SymbolTable *table, char *identifier, TypeCode type);
 SymbolTableEntry *findSymbol(SymbolTable *table, char *identifier);
 void freeSymbolTable(SymbolTable *table);
+
+#endif // SYMBOL_TABLE_H

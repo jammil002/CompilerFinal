@@ -1,3 +1,6 @@
+#ifndef AST_H
+#define AST_H
+
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -58,3 +61,5 @@ typedef struct ASTNode
 ASTNode *createASTNode(NodeType type);
 void addChildNode(ASTNode *parent, ASTNode *child);
 void freeAST(ASTNode *node);
+
+#endif // AST_H
