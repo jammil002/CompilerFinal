@@ -3,7 +3,6 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-
 #include "typeDefinitions.h"
 
 // Define the types of AST nodes

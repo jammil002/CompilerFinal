@@ -4,3 +4,7 @@ parser.tab.h
 parser.output
 
 lexer.c
+
+compiler
+
+parser

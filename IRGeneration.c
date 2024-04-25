@@ -3,7 +3,15 @@
 #include <stdlib.h>
 #include <string.h>
 
-static int tempCount = 0; // Counter for generating unique temporary variable names
+static int tempCount = 0;  // Counter for generating unique temporary variable names
+static int labelCount = 0; // Counter for generating unique label names
+
+char *newLabel()
+{
+    char labelName[20];
+    sprintf(labelName, "L%d", labelCount++);
+    return strdup(labelName);
+}
 
 char *newTemp()
 {

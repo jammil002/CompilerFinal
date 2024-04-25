@@ -1,25 +1,28 @@
-%{
+%code requires {
+#include "typeDefinitions.h"
+#include "AST.h"
+#include "symbolTable.h"
 #include <stdio.h>
 #include <stdlib.h>
-#include "AST.h"
-#include "typeDefinitions.h"
-#include "symbolTable.h"
+
 
 extern int yylineno;
 int yyerror(const char* s);
-extern int yylex(void);
+extern FILE* yyin; // The input file
+extern int yylex();
+extern int yyparse();
 
-SymbolTable* symbolTable;
-ASTNode* astRoot;
+SymbolTable* symbolTable; // The symbol table   
+ASTNode* astRoot; // The root of the AST
+}
 
-%}
 
 %union {
     int intValue;        // For integer values, typically used with NUMBER
     double floatValue;   // For floating-point values, used with FLOAT
     char* strValue;      // For string values, used with STRING
     char* identifier;    // For identifiers, used with IDENTIFIER
-    ASTNode* astNode;    // For AST nodes
+    struct ASTNode* astNode;    // For AST nodes
     TypeCode typeCode;   // For type codes
 }
 
@@ -42,7 +45,10 @@ ASTNode* astRoot;
 
 program:
     /* empty */
-    { astRoot = NULL; }
+    { 
+        astRoot = NULL; 
+        printf("PARSER: Executing program -> /* empty */\n");
+    }
     | program statement 
     {
         if ($1 == NULL) {
@@ -52,24 +58,66 @@ program:
             addChildNode($1, $2);
         }
         $$ = $1;
+        printf("PARSER: Executing program -> program statement\n");
     }
 ;
 
 statement:
     assignment SEMICOLON
+    {
+        $$ = $1;
+        printf("PARSER: Executing statement -> assignment;\n");
+    }
     | arrayDeclaration SEMICOLON
+    {
+        $$ = $1;
+        printf("PARSER: Executing statement -> arrayDeclaration;\n");
+    }
     | arrayAccess SEMICOLON
+    {
+        $$ = $1;
+        printf("PARSER: Executing statement -> arrayAccess;\n");
+    }
     | declaration SEMICOLON
+    {
+        $$ = $1;
+        printf("PARSER: Executing statement -> declaration;\n");
+    }
     | ifStatement 
+    {
+        $$ = $1;
+        printf("PARSER: Executing statement -> ifStatement\n");
+    }
     | whileLoop 
+    {
+        $$ = $1;
+        printf("PARSER: Executing statement -> whileLoop\n");
+    }
     | functionDeclaration  
+    {
+        $$ = $1;
+        printf("PARSER: Executing statement -> functionDeclaration\n");
+    }
     | functionCall SEMICOLON
+    {
+        $$ = $1;
+        printf("PARSER: Executing statement -> functionCall;\n");
+    }
     | returnStatement SEMICOLON
+    {
+        $$ = $1;
+        printf("PARSER: Executing statement -> returnStatement;\n");
+    }
     | expression SEMICOLON
-    ;
+    {
+        $$ = $1;
+        printf("PARSER: Executing statement -> expression;\n");
+    }
+;
 
 assignment:
     IDENTIFIER ASSIGN expression {
+        printf("PARSER: Executing assignment -> identifier assign expression\n");
         ASTNode* assignNode = createASTNode(AST_ASSIGNMENT);
         ASTNode* varNode = createASTNode(AST_VARIABLE);
         varNode->value.strValue = strdup($1);
@@ -325,10 +373,24 @@ expression:
 
 %%
 
-int main() {   
+int main() {  
+    yyin = fopen("test1.cmm", "r");
+    if (!yyin) {
+        fprintf(stderr, "Could not open input file\n");
+        return 1;
+    }
+
     symbolTable = createSymbolTable(); // Initialize the symbol table
-    yyparse();
+
+
+    if (yyparse() == 0) {
+        printf("PARSER: Parsing completed successfully\n");
+    } else {
+        printf("PARSER: Parsing failed\n");
+    }
+    
     freeSymbolTable(symbolTable); // Clean up the symbol table
+    fclose(yyin);
     return 1;
 }
 

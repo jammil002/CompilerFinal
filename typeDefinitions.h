@@ -1,6 +1,6 @@
 #pragma once
 
-typedef enum
+typedef enum TypeCode
 {
     TypeINT,
     TypeFLOAT,
