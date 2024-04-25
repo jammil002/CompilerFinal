@@ -8,7 +8,7 @@ all: parser
 # Compile the parser executable from Bison and Flex output, along with other C source files
 parser: parser.tab.c lexer.c AST.o symbolTable.o typeDefinitions.o
 	$(YACC) -d -v parser.y
-	$(LEX) -o lexer.c lexer.l
+	$(LEX) lexer.l
 	$(CC) $(CFLAGS) -o $@ parser.tab.c lexer.c AST.o symbolTable.o typeDefinitions.o
 
 # Dependencies for object files

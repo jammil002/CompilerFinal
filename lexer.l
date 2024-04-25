@@ -1,5 +1,7 @@
 %{
 #include "parser.tab.h"
+#include "AST.h"
+#include "typeDefinitions.h"
 
 #include <stdio.h>
 #include <stdlib.h>
