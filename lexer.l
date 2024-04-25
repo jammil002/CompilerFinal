@@ -1,21 +1,10 @@
 %{
 #include "parser.tab.h"
-#include "AST.h"
-#include "typeDefinitions.h"
-
-#include <stdio.h>
-#include <stdlib.h>
-
-
-
-extern int yywrap();
 
 %}
 
 %option yylineno
 %option yywrap
-%option debug
-%option nounput noinput
 
 
 %%
@@ -56,4 +45,3 @@ extern int yywrap();
 
 %%
 
-int yywrap() {return (1);}

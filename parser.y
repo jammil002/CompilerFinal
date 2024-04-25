@@ -6,15 +6,13 @@
 #include "symbolTable.h"
 
 extern int yylineno;
-extern int yylex();
+int yyerror(const char* s);
+extern int yylex(void);
 
 SymbolTable* symbolTable;
 ASTNode* astRoot;
 
-int yyerror(const char* s);
 %}
-
-%debug
 
 %union {
     int intValue;        // For integer values, typically used with NUMBER
@@ -327,14 +325,11 @@ expression:
 
 %%
 
-int main() {
-    extern int yydebug;  
-    yydebug = 1;
-    
+int main() {   
     symbolTable = createSymbolTable(); // Initialize the symbol table
-    int parseResult = yyparse();
+    yyparse();
     freeSymbolTable(symbolTable); // Clean up the symbol table
-    return parseResult;
+    return 1;
 }
 
 int yyerror(const char* s) {

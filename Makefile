@@ -1,28 +1,63 @@
+# Variables
 CC = gcc
-LEX = flex
-YACC = bison
-CFLAGS = -Wall -Wextra -g
+CFLAGS = -g -Wall
+FLEX = flex
+BISON = bison
+EXEC = myCompiler  # Executable name
 
-all: parser
+# Object files needed to link the executable
+OBJS = AST.o typeDefinitions.o symbolTable.o IRGeneration.o MipsGeneration.o lexer.o parser.o
 
-# Compile the parser executable from Bison and Flex output, along with other C source files
-parser: parser.tab.c lexer.c AST.o symbolTable.o typeDefinitions.o
-	$(YACC) -d -v parser.y
-	$(LEX) lexer.l
-	$(CC) $(CFLAGS) -o $@ parser.tab.c lexer.c AST.o symbolTable.o typeDefinitions.o
+# Header dependencies
+DEPS = AST.h typeDefinitions.h symbolTable.h IRGeneration.h MipsGeneration.h
 
-# Dependencies for object files
+# Default target
+all: $(EXEC)
+
+# Generate lexer.c from lexer.l
+lexer.c: lexer.l
+	$(FLEX) -o lexer.c lexer.l
+
+# Generate parser.c and parser.h from parser.y
+parser.c parser.h: parser.y
+	$(BISON) -d -o parser.c parser.y
+
+# Generic rule for compiling C files to object files
+%.o: %.c $(DEPS)
+	$(CC) $(CFLAGS) -c -o $@ $
+
+# Linking all object files into the executable
+$(EXEC): $(OBJS)
+	$(CC) $(CFLAGS) -o $@ $(OBJS) -lm
+
+# Clean up files
+clean:
+	rm -f *.o lexer.c parser.c parser.h $(EXEC)
+
+# Rule to run the test file
+run: $(EXEC)
+	./$(EXEC) < test1.cmm
+
+# Dependencies of object files on C source and generated lexer/parser code
 AST.o: AST.c AST.h
-	$(CC) $(CFLAGS) -c $< -o $@
-
-symbolTable.o: symbolTable.c symbolTable.h
-	$(CC) $(CFLAGS) -c $< -o $@
+	$(CC) $(CFLAGS) -c -o $@ AST.c
 
 typeDefinitions.o: typeDefinitions.c typeDefinitions.h
-	$(CC) $(CFLAGS) -c $< -o $@
+	$(CC) $(CFLAGS) -c -o $@ typeDefinitions.c
 
-clean:
-	rm -f parser *.o parser.tab.c parser.tab.h lexer.c parser.output lex.yy.c test1.out
+symbolTable.o: symbolTable.c symbolTable.h
+	$(CC) $(CFLAGS) -c -o $@ symbolTable.c
 
-test: parser
-	./parser < test1.cmm > test1.out
+IRGeneration.o: IRGeneration.c IRGeneration.h
+	$(CC) $(CFLAGS) -c -o $@ IRGeneration.c
+
+MipsGeneration.o: MipsGeneration.c MipsGeneration.h
+	$(CC) $(CFLAGS) -c -o $@ MipsGeneration.c
+
+lexer.o: lexer.c parser.h
+	$(CC) $(CFLAGS) -c -o $@ lexer.c
+
+parser.o: parser.c parser.h
+	$(CC) $(CFLAGS) -c -o $@ parser.c
+
+.PHONY: all clean run
