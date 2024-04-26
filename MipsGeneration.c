@@ -67,9 +67,19 @@ void releaseRegister(char *reg)
 // Translate a single IR instruction to MIPS
 void translateIRInstruction(IRInstruction *ir, FILE *outFile)
 {
+    if (ir == NULL)
+    {
+        fprintf(stderr, "Error: NULL IR instruction passed to translateIRInstruction.\n");
+        return;
+    }
+    if (outFile == NULL)
+    {
+        fprintf(stderr, "Error: NULL outFile passed to translateIRInstruction.\n");
+        return;
+    }
+
     char *mipsReg1, *mipsReg2, *mipsRegResult;
 
-    // Handle different types of operations
     if (strcmp(ir->op, "+") == 0)
     {
         mipsReg1 = mapTempToReg(ir->arg1);
@@ -130,12 +140,35 @@ void translateIRInstruction(IRInstruction *ir, FILE *outFile)
         }
         fprintf(outFile, "jr $ra\n"); // Jump back to return address
     }
+    else if (strcmp(ir->op, "WHILE") == 0)
+    {
+        char *startLabel = ir->arg1;
+        char *endLabel = ir->result;
+
+        // Label for the start of the loop
+        fprintf(outFile, "%s:\n", startLabel);
+
+        IRInstruction *conditionCheck = ir->next;
+        fprintf(outFile, "beqz %s, %s\n", mapTempToReg(conditionCheck->result), endLabel); // exit loop if condition is zero
+
+        IRInstruction *bodyStart = conditionCheck->next;
+        IRInstruction *current = bodyStart;
+        while (current != NULL && strcmp(current->op, "GOTO") != 0)
+        {                                             // stop when reaching the jump back instruction
+            translateIRInstruction(current, outFile); // recursively translate each IR instruction in the loop body
+            current = current->next;
+        }
+
+        fprintf(outFile, "j %s\n", startLabel);
+
+        fprintf(outFile, "%s:\n", endLabel);
+    }
 }
 
 // Main function to generate MIPS from a list of IR instructions
 void generateMIPS(IRInstruction *irList, const char *filename)
 {
-    FILE *outFile = fopen(filename, "w");
+    FILE *outFile = fopen(filename, "w+");
     if (!outFile)
     {
         perror("Failed to open file");

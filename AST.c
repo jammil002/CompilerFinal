@@ -10,17 +10,18 @@ ASTNode *createASTNode(NodeType type)
         exit(EXIT_FAILURE);
     }
 
-    // if (!type)
-    // {
-    //     fprintf(stderr, "Error: Node type is NULL\n");
-    //     exit(EXIT_FAILURE);
-    // }
-
     node->type = type;
     node->children = NULL;
     node->childCount = 0;
 
     printf("AST: Node created with type %s\n", nodeTypeToString(type));
+    return node;
+}
+
+ASTNode *createTypeNode(NodeType nodeType, TypeCode typeCode)
+{
+    ASTNode *node = createASTNode(nodeType);
+    node->value.typeCode = typeCode; // Assuming the `value` field is part of ASTNode
     return node;
 }
 
@@ -109,8 +110,7 @@ const char *nodeTypeToString(NodeType type)
         return "AST_PARAMETER_LIST";
     case AST_UNEXPECTED:
         return "AST_UNEXPECTED";
-    case 121:
-        return "Unknown NodeType 121";
+
     default:
         fprintf(stderr, "Error: Unknown NodeType %d encountered\n", type);
         return "Unknown NodeType";

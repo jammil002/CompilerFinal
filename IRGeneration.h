@@ -17,5 +17,6 @@ char *newLabel();
 char *newTemp();
 IRInstruction *appendInstruction(IRInstruction *list, IRInstruction *instr);
 IRInstruction *generateIRForNode(ASTNode *node);
+void printIRInstructions(IRInstruction *head);
 
 #endif

@@ -11,4 +11,4 @@ parser: lex.yy.c parser.tab.c parser.tab.h AST.c symbolTable.c IRGeneration.c Mi
 	./compiler test1.cmm
 
 clean: 
-	rm parser.tab.c lex.yy.c parser.tab.h parser.output compiler 
+	rm parser.tab.c lex.yy.c parser.tab.h parser.output compiler output.asm

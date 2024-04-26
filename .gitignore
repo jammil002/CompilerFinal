@@ -11,3 +11,5 @@ compiler
 parser
 
 compiler.dSYM
+
+output.asm

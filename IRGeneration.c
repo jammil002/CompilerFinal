@@ -127,18 +127,94 @@ IRInstruction *generateIRForNode(ASTNode *node)
 
     case AST_WHILE_LOOP:
     {
-        printf(" IR: WHILE Loop\n");
-        IRInstruction *condInstr = generateIRForNode(node->children[0]);
-        IRInstruction *bodyInstr = generateIRForNode(node->children[1]);
-        char *loopLabel = newLabel();
-        instr = malloc(sizeof(IRInstruction));
-        instr->op = strdup("WHILE");
-        instr->arg1 = condInstr->result;
-        instr->arg2 = NULL;
-        instr->result = loopLabel;
-        instr->next = condInstr;
-        appendInstruction(instr, bodyInstr);
-        printf(" IR: Loop condition at %s\n", loopLabel);
+        printf("IR: WHILE Loop\n");
+
+        // Generate IR for the loop condition
+        IRInstruction *condInstr = generateIRForNode(node->children[0]); // Assuming child[0] is the condition
+        if (!condInstr)
+        {
+            fprintf(stderr, "Failed to generate IR for the loop condition.\n");
+            break;
+        }
+
+        // Generate IR for the loop body
+        IRInstruction *bodyInstr = generateIRForNode(node->children[1]); // Assuming child[1] is the body
+        if (!bodyInstr)
+        {
+            fprintf(stderr, "Failed to generate IR for the loop body.\n");
+            break;
+        }
+
+        // Create labels for the start and end of the loop
+        char *startLabel = newLabel();
+        char *endLabel = newLabel();
+
+        // Entry instruction for the loop (start label)
+        IRInstruction *entryInstr = malloc(sizeof(IRInstruction));
+        if (!entryInstr)
+        {
+            perror("Failed to allocate memory for entryInstr");
+            break;
+        }
+        entryInstr->op = strdup("LABEL");
+        entryInstr->arg1 = strdup(startLabel);
+        entryInstr->arg2 = NULL;
+        entryInstr->result = NULL;
+        entryInstr->next = condInstr; // Condition check follows
+
+        // Instruction to jump out of the loop if condition is false
+        IRInstruction *branchInstr = malloc(sizeof(IRInstruction));
+        if (!branchInstr)
+        {
+            perror("Failed to allocate memory for branchInstr");
+            break;
+        }
+        branchInstr->op = strdup("IFGOTO");
+        branchInstr->arg1 = strdup(condInstr->result);
+        branchInstr->arg2 = NULL;
+        branchInstr->result = strdup(endLabel);
+        condInstr->next = branchInstr; // Branch follows the condition
+
+        // Append the body of the loop
+        branchInstr->next = bodyInstr;
+
+        // Instruction to jump back to the start
+        IRInstruction *jumpBackInstr = malloc(sizeof(IRInstruction));
+        if (!jumpBackInstr)
+        {
+            perror("Failed to allocate memory for jumpBackInstr");
+            break;
+        }
+        jumpBackInstr->op = strdup("GOTO");
+        jumpBackInstr->arg1 = strdup(startLabel);
+        jumpBackInstr->arg2 = NULL;
+        jumpBackInstr->result = NULL;
+
+        // Find the last instruction of the body to append the jump back
+        IRInstruction *lastBodyInstr = bodyInstr;
+        while (lastBodyInstr->next != NULL)
+        {
+            lastBodyInstr = lastBodyInstr->next;
+        }
+        lastBodyInstr->next = jumpBackInstr;
+
+        // Exit label for the loop
+        IRInstruction *exitInstr = malloc(sizeof(IRInstruction));
+        if (!exitInstr)
+        {
+            perror("Failed to allocate memory for exitInstr");
+            break;
+        }
+        exitInstr->op = strdup("LABEL");
+        exitInstr->arg1 = strdup(endLabel);
+        exitInstr->arg2 = NULL;
+        exitInstr->result = NULL;
+        jumpBackInstr->next = exitInstr;
+
+        // Set the 'instr' to the entry instruction
+        instr = entryInstr;
+
+        printf("IR: Loop starts at %s and exits at %s\n", startLabel, endLabel);
     }
     break;
 
@@ -420,5 +496,26 @@ IRInstruction *generateIRForNode(ASTNode *node)
         exit(EXIT_FAILURE);
     }
 
-    return first;
+    if (!first)
+    {
+        return instr;
+    }
+    else
+    {
+        return first;
+    }
+}
+
+void printIRInstructions(IRInstruction *head)
+{
+    printf("Printing IR Instructions:\n");
+    while (head != NULL)
+    {
+        printf("Operation: %s, Arg1: %s, Arg2: %s, Result: %s\n",
+               head->op ? head->op : "NULL",
+               head->arg1 ? head->arg1 : "NULL",
+               head->arg2 ? head->arg2 : "NULL",
+               head->result ? head->result : "NULL");
+        head = head->next;
+    }
 }

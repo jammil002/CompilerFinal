@@ -451,19 +451,20 @@ int main() {
     printAST(astRoot, 0); 
 
     printf("IR: Creating IR instruction\n");
-    IRInstruction *irHead = generateIRForNode(astRoot); 
+    IRInstruction *irHead = generateIRForNode(astRoot);
+    printIRInstructions(irHead);
 
-    FILE *fp = fopen("output.asm", "w+"); // Create if it doesn't exist, otherwise open for read/write
-    if (fp == NULL) {
-        fprintf(stderr, "Error creating output file\n");
+    if (irHead == NULL) {
+        fprintf(stderr, "Error generating IR instructions\n");
         return 1;
-    } 
+    }
     
-    translateIRInstruction(irHead, fp); // Translate the IR instructions to assembly code
+    printf("MIPS: Generating MIPS code\n");
+    generateMIPS(irHead, "output.asm"); // Translate the IR instructions to assembly code
     
-    fclose(fp);
     freeSymbolTable(symbolTable); // Clean up the symbol table
     fclose(yyin);
+
     return 1;
 }
 

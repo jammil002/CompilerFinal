@@ -66,5 +66,6 @@ const char *nodeTypeToString(NodeType type);
 void printIndent(int level);
 void printNodeValue(ASTNode *node);
 void printAST(ASTNode *node, int level);
+ASTNode *createTypeNode(NodeType nodeType, TypeCode typeCode);
 
 #endif // AST_H
