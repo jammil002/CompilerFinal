@@ -6,6 +6,8 @@
 #include "MipsGeneration.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
+
 
 
 extern int yylineno;
@@ -432,6 +434,9 @@ int main() {
     /* extern int yydebug;
     yydebug = 1; */
 
+    clock_t startTime, endTime;
+    double cpuTimeUsed;
+
     yyin = fopen("test1.cmm", "r");
     if (!yyin) {
         fprintf(stderr, "Could not open input file\n");
@@ -458,14 +463,20 @@ int main() {
         fprintf(stderr, "Error generating IR instructions\n");
         return 1;
     }
+
+
+    endTime = clock();
+    cpuTimeUsed = ((double) (endTime - startTime)) / CLOCKS_PER_SEC;
+
+    printf("Compilation Time: %f seconds\n", cpuTimeUsed);
     
     printf("MIPS: Generating MIPS code\n");
     generateMIPS(irHead, "output.asm"); // Translate the IR instructions to assembly code
     
-    freeSymbolTable(symbolTable); // Clean up the symbol table
     fclose(yyin);
+    freeSymbolTable(symbolTable); // Clean up the symbol table
 
-    return 1;
+    return 0;
 }
 
 int yyerror(const char* s) {

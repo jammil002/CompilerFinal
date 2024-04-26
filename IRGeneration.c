@@ -330,8 +330,7 @@ IRInstruction *generateIRForNode(ASTNode *node)
     case AST_PARAMETER:
     {
         printf(" IR: Parameter %s - no IR generated here\n", node->value.strValue);
-        // Parameters usually don't generate IR directly unless for function prologues
-        instr = NULL; // No IR generated here, handled at function declaration
+        instr = NULL;
     }
     break;
 
