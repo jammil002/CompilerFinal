@@ -437,6 +437,8 @@ int main() {
     clock_t startTime, endTime;
     double cpuTimeUsed;
 
+    startTime = clock(); // Start the timer
+
     yyin = fopen("test1.cmm", "r");
     if (!yyin) {
         fprintf(stderr, "Could not open input file\n");
