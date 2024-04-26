@@ -7,7 +7,9 @@ typedef enum TypeCode
     TypeSTRING,
     TypeVOID,
     TypeBOOL,
-    TypeUNKNOWN
+    TypeUNKNOWN,
+    TypeARRAY,
+    TypePARAMATER
 } TypeCode;
 
 double convertIntToFloat(int intValue);

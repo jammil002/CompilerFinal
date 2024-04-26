@@ -13,11 +13,9 @@ typedef struct IRInstruction
     struct IRInstruction *next; // Pointer to next instruction (for linked list)
 } IRInstruction;
 
-// Function to generate the complete IR code for the given AST
-IRInstruction *generateIR(ASTNode *ast);
+char *newLabel();
+char *newTemp();
 IRInstruction *appendInstruction(IRInstruction *list, IRInstruction *instr);
-
-// Utility functions
-char *newTemp(); // Function to generate new temporary variables
+IRInstruction *generateIRForNode(ASTNode *node);
 
 #endif

@@ -1,4 +1,5 @@
 #include "IRGeneration.h"
+#include "AST.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -36,51 +37,60 @@ IRInstruction *appendInstruction(IRInstruction *list, IRInstruction *instr)
 IRInstruction *generateIRForNode(ASTNode *node)
 {
     if (!node)
+    {
+        printf(" IR: Node is NULL\n");
         return NULL;
+    }
 
     IRInstruction *instr = NULL;
     IRInstruction *first = NULL;
     IRInstruction *last = NULL;
 
+    printf(" IR: Generating for Node Type %d\n", node->type);
+
     switch (node->type)
     {
     case AST_PROGRAM:
+        printf(" IR: Start Program\n");
         for (int i = 0; i < node->childCount; i++)
         {
             IRInstruction *childInstr = generateIRForNode(node->children[i]);
             first = first ? first : childInstr;
             last = appendInstruction(last, childInstr);
         }
+        printf(" IR: End Program\n");
         break;
 
     case AST_DECLARATION:
-        // Handles both initialized and uninitialized declarations
-        {
-            char *variableName = node->children[1]->value.strValue;
-            if (node->childCount == 3)
-            { // Declaration with initialization
-                IRInstruction *exprInstr = generateIRForNode(node->children[2]);
-                instr = malloc(sizeof(IRInstruction));
-                instr->op = strdup("=");
-                instr->arg1 = exprInstr->result;
-                instr->arg2 = NULL;
-                instr->result = strdup(variableName);
-                instr->next = exprInstr;
-            }
-            else
-            { // Declaration without initialization
-                instr = malloc(sizeof(IRInstruction));
-                instr->op = strdup("NOP");
-                instr->arg1 = NULL;
-                instr->arg2 = NULL;
-                instr->result = strdup(variableName);
-                instr->next = NULL;
-            }
+    {
+        char *variableName = node->children[1]->value.strValue;
+        if (node->childCount == 3)
+        { // Declaration with initialization
+            printf(" IR: Declaration with initialization for %s\n", variableName);
+            IRInstruction *exprInstr = generateIRForNode(node->children[2]);
+            instr = malloc(sizeof(IRInstruction));
+            instr->op = strdup("=");
+            instr->arg1 = exprInstr->result;
+            instr->arg2 = NULL;
+            instr->result = strdup(variableName);
+            instr->next = exprInstr;
         }
-        break;
+        else
+        { // Declaration without initialization
+            printf(" IR: Declaration without initialization for %s\n", variableName);
+            instr = malloc(sizeof(IRInstruction));
+            instr->op = strdup("NOP");
+            instr->arg1 = NULL;
+            instr->arg2 = NULL;
+            instr->result = strdup(variableName);
+            instr->next = NULL;
+        }
+    }
+    break;
 
     case AST_ASSIGNMENT:
     {
+        printf(" IR: Assignment\n");
         IRInstruction *valueInstr = generateIRForNode(node->children[2]);
         instr = malloc(sizeof(IRInstruction));
         instr->op = strdup("=");
@@ -93,44 +103,48 @@ IRInstruction *generateIRForNode(ASTNode *node)
 
     case AST_IF_STATEMENT:
     {
+        printf(" IR: IF Statement\n");
         IRInstruction *condInstr = generateIRForNode(node->children[0]);
         IRInstruction *thenInstr = generateIRForNode(node->children[1]);
+        char *label = newLabel();
         instr = malloc(sizeof(IRInstruction));
         instr->op = strdup("IFGOTO");
         instr->arg1 = condInstr->result;
         instr->arg2 = NULL;
-        instr->result = newLabel(); // Create new label for jump
+        instr->result = label;
         instr->next = condInstr;
         appendInstruction(instr, thenInstr);
+        printf(" IR: Jump to %s if true\n", label);
 
         if (node->childCount > 2)
         { // Has ELSE part
             IRInstruction *elseInstr = generateIRForNode(node->children[2]);
             appendInstruction(thenInstr, elseInstr);
+            printf(" IR: ELSE part\n");
         }
     }
     break;
 
     case AST_WHILE_LOOP:
     {
+        printf(" IR: WHILE Loop\n");
         IRInstruction *condInstr = generateIRForNode(node->children[0]);
         IRInstruction *bodyInstr = generateIRForNode(node->children[1]);
+        char *loopLabel = newLabel();
         instr = malloc(sizeof(IRInstruction));
         instr->op = strdup("WHILE");
         instr->arg1 = condInstr->result;
         instr->arg2 = NULL;
-        instr->result = newLabel(); // Label for loop condition
+        instr->result = loopLabel;
         instr->next = condInstr;
         appendInstruction(instr, bodyInstr);
+        printf(" IR: Loop condition at %s\n", loopLabel);
     }
     break;
 
-    case AST_FUNCTION_DECLARATION:
-        // Further implementation needed
-        break;
-
     case AST_RETURN_STATEMENT:
     {
+        printf(" IR: RETURN Statement\n");
         IRInstruction *retInstr = generateIRForNode(node->children[0]);
         instr = malloc(sizeof(IRInstruction));
         instr->op = strdup("RETURN");
@@ -143,30 +157,35 @@ IRInstruction *generateIRForNode(ASTNode *node)
 
     case AST_BINARY_EXPR:
     {
+        printf(" IR: Start Binary Expression\n");
         IRInstruction *leftInstr = generateIRForNode(node->children[0]);
         IRInstruction *rightInstr = generateIRForNode(node->children[1]);
         instr = malloc(sizeof(IRInstruction));
+        char *opType;
         switch (node->value.opType)
         {
         case OP_PLUS:
-            instr->op = strdup("+");
+            opType = "+";
             break;
         case OP_MINUS:
-            instr->op = strdup("-");
+            opType = "-";
             break;
         case OP_MULTIPLY:
-            instr->op = strdup("*");
+            opType = "*";
             break;
         case OP_DIVIDE:
-            instr->op = strdup("/");
+            opType = "/";
             break;
         default:
-            instr->op = strdup("unknown_op");
+            opType = "unknown_op";
             break;
         }
+        printf(" IR: Operation %s between %s and %s\n", opType, leftInstr->result, rightInstr->result);
+        instr->op = strdup(opType);
         instr->arg1 = leftInstr->result;
         instr->arg2 = rightInstr->result;
         instr->result = newTemp();
+        printf(" IR: Result stored in %s\n", instr->result);
         instr->next = NULL;
 
         appendInstruction(leftInstr, rightInstr);
@@ -177,13 +196,15 @@ IRInstruction *generateIRForNode(ASTNode *node)
 
     case AST_LITERAL:
     {
+        printf(" IR: Literal value %d\n", node->value.intValue);
         instr = malloc(sizeof(IRInstruction));
         instr->op = strdup("MOV");
         char *literalValue = malloc(20);
-        sprintf(literalValue, "%d", node->value.intValue); // Assuming integer literals for simplicity
+        sprintf(literalValue, "%d", node->value.intValue);
         instr->arg1 = literalValue;
         instr->arg2 = NULL;
         instr->result = newTemp();
+        printf(" IR: Move literal %s to %s\n", literalValue, instr->result);
         instr->next = NULL;
         first = instr;
     }
@@ -191,11 +212,13 @@ IRInstruction *generateIRForNode(ASTNode *node)
 
     case AST_VARIABLE:
     {
+        printf(" IR: Variable access %s\n", node->value.strValue);
         instr = malloc(sizeof(IRInstruction));
         instr->op = strdup("LOAD");
         instr->arg1 = strdup(node->value.strValue);
         instr->arg2 = NULL;
         instr->result = newTemp();
+        printf(" IR: Load variable %s into %s\n", node->value.strValue, instr->result);
         instr->next = NULL;
         first = instr;
     }
@@ -203,11 +226,11 @@ IRInstruction *generateIRForNode(ASTNode *node)
 
     case AST_FUNCTION_CALL:
     {
+        printf(" IR: Function call %s\n", node->children[0]->value.strValue);
         IRInstruction *argInstr = NULL;
-        // Generate IR for all arguments
         for (int i = 0; i < node->childCount - 1; i++)
         {
-            IRInstruction *tempInstr = generateIRForNode(node->children[i + 1]); // Assuming first child is the function name
+            IRInstruction *tempInstr = generateIRForNode(node->children[i + 1]);
             if (i == 0)
             {
                 argInstr = tempInstr;
@@ -222,6 +245,7 @@ IRInstruction *generateIRForNode(ASTNode *node)
         instr->arg1 = strdup(node->children[0]->value.strValue);
         instr->arg2 = NULL;
         instr->result = newTemp();
+        printf(" IR: Call result stored in %s\n", instr->result);
         instr->next = argInstr;
         first = instr;
     }
@@ -229,6 +253,7 @@ IRInstruction *generateIRForNode(ASTNode *node)
 
     case AST_PARAMETER:
     {
+        printf(" IR: Parameter %s - no IR generated here\n", node->value.strValue);
         // Parameters usually don't generate IR directly unless for function prologues
         instr = NULL; // No IR generated here, handled at function declaration
     }
@@ -236,6 +261,7 @@ IRInstruction *generateIRForNode(ASTNode *node)
 
     case AST_ARRAY_DECLARATION:
     {
+        printf(" IR: Allocating array %s\n", node->children[1]->value.strValue);
         instr = malloc(sizeof(IRInstruction));
         instr->op = strdup("ALLOC_ARRAY");
         instr->arg1 = strdup(node->children[1]->value.strValue);    // Variable name
@@ -248,6 +274,7 @@ IRInstruction *generateIRForNode(ASTNode *node)
 
     case AST_ARRAY_ACCESS:
     {
+        printf(" IR: Accessing array %s\n", node->children[0]->value.strValue);
         IRInstruction *indexInstr = generateIRForNode(node->children[1]);
         instr = malloc(sizeof(IRInstruction));
         instr->op = strdup("ARRAY_ACCESS");
@@ -261,12 +288,14 @@ IRInstruction *generateIRForNode(ASTNode *node)
 
     case AST_TYPE:
     {
+        printf(" IR: Type node - no IR generated\n");
         instr = NULL; // No IR generated here
     }
     break;
 
     case AST_UNARY_EXPR:
     {
+        printf(" IR: Unary expression with operator %s\n", node->value.opType == OP_NEGATE ? "NEG" : "NOT");
         IRInstruction *operandInstr = generateIRForNode(node->children[0]);
         instr = malloc(sizeof(IRInstruction));
         instr->op = strdup(node->value.opType == OP_NEGATE ? "NEG" : "NOT"); // Simplified unary operations
@@ -280,7 +309,7 @@ IRInstruction *generateIRForNode(ASTNode *node)
 
     case AST_BLOCK:
     {
-        // Enter a new scope: this could translate to pushing a new frame on the stack in more complex IR
+        printf(" IR: Entering new block scope\n");
         IRInstruction *enterScopeInstr = malloc(sizeof(IRInstruction));
         enterScopeInstr->op = strdup("ENTER_SCOPE");
         enterScopeInstr->arg1 = NULL;
@@ -288,7 +317,6 @@ IRInstruction *generateIRForNode(ASTNode *node)
         enterScopeInstr->result = NULL;
         enterScopeInstr->next = NULL;
 
-        // Generate IR for all statements within the block
         IRInstruction *lastInstr = enterScopeInstr;
         for (int i = 0; i < node->childCount; i++)
         {
@@ -300,25 +328,22 @@ IRInstruction *generateIRForNode(ASTNode *node)
             }
         }
 
-        // Exit the scope: this could translate to popping the frame off the stack
         IRInstruction *exitScopeInstr = malloc(sizeof(IRInstruction));
         exitScopeInstr->op = strdup("EXIT_SCOPE");
         exitScopeInstr->arg1 = NULL;
         exitScopeInstr->arg2 = NULL;
         exitScopeInstr->result = NULL;
         exitScopeInstr->next = NULL;
-
-        // Link the exit scope instruction after the last instruction of the block
         lastInstr->next = exitScopeInstr;
 
-        // Return the first instruction (enter scope), which links through to the last (exit scope)
+        printf(" IR: Exiting block scope\n");
         first = enterScopeInstr;
     }
     break;
 
     case AST_ARGUMENTS:
     {
-
+        printf(" IR: Generating arguments list\n");
         for (int i = 0; i < node->childCount; i++)
         {
             IRInstruction *argInstr = generateIRForNode(node->children[i]);
@@ -335,8 +360,63 @@ IRInstruction *generateIRForNode(ASTNode *node)
     }
     break;
 
+    case AST_FUNCTION_DECLARATION:
+    {
+        if (node->childCount < 4)
+        {
+            fprintf(stderr, "Error: Function declaration node does not have all required children.\n");
+            exit(EXIT_FAILURE);
+        }
+
+        ASTNode *nameNode = node->children[1]; // The function name node.
+        if (!nameNode || nameNode->type != AST_VARIABLE || !nameNode->value.strValue)
+        {
+            fprintf(stderr, "Error: Invalid or missing function name in function declaration.\n");
+            exit(EXIT_FAILURE);
+        }
+
+        char *functionName = nameNode->value.strValue;
+        printf(" IR: Function %s declaration\n", functionName);
+
+        // Create a label for the function entry.
+        IRInstruction *entryPoint = malloc(sizeof(IRInstruction));
+        entryPoint->op = strdup("LABEL");
+        entryPoint->arg1 = NULL;
+        entryPoint->arg2 = NULL;
+        entryPoint->result = strdup(functionName);
+        entryPoint->next = NULL;
+        printf(" IR: Label %s for function entry created\n", functionName);
+
+        // Generate IR for the function body.
+        printf(" IR: Function body for %s\n", functionName);
+        IRInstruction *bodyInstr = generateIRForNode(node->children[3]); // Assuming body is the 4th child.
+        if (bodyInstr)
+        {
+            appendInstruction(entryPoint, bodyInstr);
+        }
+
+        // Define exit point for the function.
+        IRInstruction *exitPoint = malloc(sizeof(IRInstruction));
+        exitPoint->op = strdup("RETURN");
+        exitPoint->arg1 = exitPoint->arg2 = NULL;
+        exitPoint->result = NULL;
+        exitPoint->next = NULL;
+
+        // Append exit point after the last instruction in the function body.
+        IRInstruction *lastInstr = entryPoint;
+        while (lastInstr && lastInstr->next)
+        {
+            lastInstr = lastInstr->next; // Navigate to the last instruction.
+        }
+        lastInstr->next = exitPoint;
+
+        printf(" IR: Exit for function %s set up\n", functionName);
+        first = entryPoint;
+    }
+    break;
+
     default:
-        fprintf(stderr, "Unhandled node type %d in IR generation\n", node->type);
+        fprintf(stderr, "Error: Unhandled node type %d in IR generation\n", node->type);
         exit(EXIT_FAILURE);
     }
 

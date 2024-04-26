@@ -25,7 +25,9 @@ typedef enum
     AST_TYPE,
     AST_UNARY_EXPR,
     AST_BLOCK,
-    AST_ARGUMENTS
+    AST_ARGUMENTS,
+    AST_PARAMETER_LIST,
+    AST_UNEXPECTED
 } NodeType;
 
 typedef enum
@@ -60,5 +62,9 @@ typedef struct ASTNode
 ASTNode *createASTNode(NodeType type);
 void addChildNode(ASTNode *parent, ASTNode *child);
 void freeAST(ASTNode *node);
+const char *nodeTypeToString(NodeType type);
+void printIndent(int level);
+void printNodeValue(ASTNode *node);
+void printAST(ASTNode *node, int level);
 
 #endif // AST_H

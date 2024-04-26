@@ -4,7 +4,10 @@ parser.tab.h
 parser.output
 
 lexer.c
+lex.yy.c
 
 compiler
 
 parser
+
+compiler.dSYM

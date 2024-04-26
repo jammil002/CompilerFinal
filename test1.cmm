@@ -1,2 +1,4 @@
-Starting parser
-PARSER: Executing program -> /* empty */
+int add(x, y) {
+    return x + y;
+}
+
